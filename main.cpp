@@ -23,17 +23,64 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 */
 
+#include "inttypes.h"
 #include "MicroBit.h"
 
 MicroBit uBit;
+MicroBitPin sensorPin(MICROBIT_ID_IO_P2, MICROBIT_PIN_P2, PIN_CAPABILITY_DIGITAL);
+
+uint64_t lastFallTimestamp=0;
+uint64_t lastRiseTimestamp=0;
+uint32_t fallCount=0;
+MicroBitImage IMG_FALL("1,1,1,0,0\n0,0,1,0,0\n0,0,1,0,0\n0,0,1,0,0\n0,0,1,1,1\n");
+
+void onEdgeSensorPin(MicroBitEvent e)
+{
+    int pinValue;
+    uint64_t duration;
+    switch (e.value)
+    {
+    case MICROBIT_PIN_EVT_FALL:
+        pinValue = 0;
+        lastFallTimestamp = e.timestamp;
+        duration = lastFallTimestamp-lastRiseTimestamp;
+        fallCount++;
+
+        uBit.display.stopAnimation();
+        uBit.display.scrollAsync(IMG_FALL,(int)(duration/15000),-1);
+        break;
+    
+    case MICROBIT_PIN_EVT_RISE:
+        pinValue = 1;
+        lastRiseTimestamp = e.timestamp;
+        duration = lastRiseTimestamp-lastFallTimestamp;
+        break;
+    
+    default:
+        return;
+        break;
+    }
+    uBit.serial.printf("%"PRIu32", %"PRIu32", %d, %"PRIu32"\r\n"
+        , fallCount, (uint32_t)e.timestamp, pinValue, (uint32_t)duration);
+}
+
+void setup(void)
+{
+    uBit.serial.printf("#, Timestamp, Digial, Duration, \r\n");
+
+    uBit.messageBus.listen(MICROBIT_ID_IO_P2, MICROBIT_EVT_ANY, onEdgeSensorPin);
+    sensorPin.getDigitalValue(PullUp);
+    sensorPin.eventOn(MICROBIT_PIN_EVENT_ON_EDGE);
+
+    uBit.display.scrollAsync("GO!");
+}
 
 int main()
 {
     // Initialise the micro:bit runtime.
     uBit.init();
 
-    // Insert your code here!
-    uBit.display.scroll("HELLO WORLD! :)");
+    create_fiber(setup);
 
     // If main exits, there may still be other fibers running or registered event handlers etc.
     // Simply release this fiber, which will mean we enter the scheduler. Worse case, we then

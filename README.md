@@ -1,3 +1,27 @@
+# microbit-digital-capture
+
+デジタル信号の解析用に、BBC micro:bit の端子P2を使って、デジタル入力の立ち上がりや立ち下がりをUSBシリアル通信でキャプチャーします。
+
+## ライブラリのインストールとコンパイル
+
+```
+C:\workubit\venv\Scripts\activate.bat
+mbedubitwin10
+mbed compile
+
+```
+
+## コンパイルと書き込み（コピー）
+
+```
+C:\workubit\venv\Scripts\activate.bat
+
+mbed compile
+copy .\BUILD\NRF51_MICROBIT\GCC_ARM\microbit-digital-capture.hex d:\
+
+```
+
+
 # mbed-microbit-template
 
 mbed-microbit-templateは、GitHubテンプレートであり、C/C++言語を使ってランチェスター大学によって作成されたmicro:bitランタイムへの参照をあらかじめ含んでいます。  
